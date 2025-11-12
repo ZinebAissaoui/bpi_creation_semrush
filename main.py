@@ -1,6 +1,7 @@
 import pandas as pd
 import time
 from dotenv import load_dotenv
+import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from connectors.google_sheet import connect_gsheet
@@ -15,13 +16,15 @@ DATABASE = "fr"                   # exemple : fr, us, uk, es, etc.
 #INPUT_CSV = "urls_semrush.csv"
 #OUTPUT_CSV = "urls_semrush_updated.csv"
 GOOGLE_SHEET_ID = os.environ['GOOGLE_SHEET_ID']  # <-- remplace par l’ID de ton Google Sheet
+service_account_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+
 SHEET_NAME = "Team Data- URLS"
 # ------------------------------
 # SCRIPT PRINCIPAL
 # ------------------------------
 def main():
     print("🔗 Connexion à Google Sheets…")
-    sheet = connect_gsheet(GOOGLE_SHEET_ID, SHEET_NAME)
+    sheet = connect_gsheet(GOOGLE_SHEET_ID, SHEET_NAME,service_account_info)
 
     print(f"📥 Lecture de la feuille '{SHEET_NAME}'…")
     # ⚙️ Ignore les colonnes en double avec expected_headers
