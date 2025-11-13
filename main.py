@@ -11,7 +11,7 @@ load_dotenv()
 # ------------------------------
 # CONFIGURATION
 # ------------------------------
-API_KEY = "f48f8801557c385665692dced469e22e"  # <-- remplace par ta clé
+API_KEY =  os.environ['api_key_semrush'] # <-- remplace par ta clé
 DATABASE = "fr"                   # exemple : fr, us, uk, es, etc.
 #INPUT_CSV = "urls_semrush.csv"
 #OUTPUT_CSV = "urls_semrush_updated.csv"

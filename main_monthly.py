@@ -14,7 +14,7 @@ service_account_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
 # ------------------------------
 # CONFIGURATION
 # ------------------------------
-API_KEY = "f48f8801557c385665692dced469e22e"  # <-- remplace par ta clé
+API_KEY =  os.environ['api_key_semrush']   # <-- remplace par ta clé
 DATABASE = "fr"
 GOOGLE_SHEET_ID = os.environ['GOOGLE_SHEET_ID']
 SOURCE_SHEET_NAME = "Team Data- URLS"
