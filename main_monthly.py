@@ -98,7 +98,13 @@ def main():
         print("📝 Écriture des nouvelles lignes dans Google Sheets…")
         start_row = len(target_sheet.get_all_values()) + 1
         for i, row_vals in enumerate(new_rows):
-            target_sheet.update(f"A{start_row + i}", [row_vals])
+            try:
+                target_sheet.update(f"A{start_row + i}", [row_vals])
+            except Exception as e:
+                import traceback
+                print("ERROR DURING SHEET UPDATE:", e)
+                traceback.print_exc()
+                raise
 
     print("\n✅ Mise à jour terminée dans la feuille 'monthly_run'.")
 
