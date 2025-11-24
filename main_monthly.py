@@ -19,7 +19,7 @@ DATABASE = "fr"
 GOOGLE_SHEET_ID = os.environ['GOOGLE_SHEET_ID']
 SOURCE_SHEET_NAME = "Team Data- URLS"
 TARGET_SHEET_NAME = "monthly_run"
-HISTORIC_MONTHS = 60  # nombre de mois à récupérer pour l’historique
+HISTORIC_MONTHS = 6  # nombre de mois à récupérer pour l’historique
 #json_account = os.environ['credentials_service_account']
 # ------------------------------
 # FONCTIONS
