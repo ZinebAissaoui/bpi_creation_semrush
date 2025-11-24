@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from connectors.google_sheet import connect_gsheet
-from connectors.semrush import *
+from connectors.semrush_local import *
 load_dotenv()
 
 # ------------------------------

@@ -1,16 +1,37 @@
+from google.cloud import storage
+import json
+import os
 
 import pandas as pd
 import requests
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import os
+from dotenv import load_dotenv
+load_dotenv()
 DEBUG_FOLDER = "debug_semrush"     # dossier pour stocker les réponses brutes
 
 os.makedirs(DEBUG_FOLDER, exist_ok=True)
 
-# ------------------------------
-# FONCTIONS UTILES
-# ------------------------------
+# Authentification (même JSON que pour Google Sheets)
+service_account_info =  json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+
+
+storage_client = storage.Client.from_service_account_info(service_account_info)
+bucket_name = os.getenv("GCP_BUCKET_NAME")
+bucket = storage_client.bucket(bucket_name)
+
+def gcs_blob_exists(blob_name):
+    blob = bucket.blob(blob_name)
+    return blob.exists()
+
+def gcs_read_text(blob_name):
+    blob = bucket.blob(blob_name)
+    return blob.download_as_text()
+
+def gcs_write_text(blob_name, text):
+    blob = bucket.blob(blob_name)
+    blob.upload_from_string(text, content_type="text/plain")
+
 def to_date(date_str):
     """Convertit une date JJ/MM/AAAA en datetime."""
     return datetime.strptime(date_str, "%d/%m/%Y")
@@ -20,26 +41,20 @@ def format_semrush_date(dt):
     return dt.strftime("%Y%m") + "15"
 
 def save_debug_response(keyword, display_date, content):
-    """Sauvegarde la réponse brute SEMrush pour debug."""
     safe_kw = keyword.replace(" ", "_").replace("/", "_")
-    file_path = os.path.join(DEBUG_FOLDER, f"semrush_{safe_kw}_{display_date}.csv")
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(content)
+    blob_name = f"semrush_{safe_kw}_{display_date}.csv"
+    gcs_write_text(blob_name, content)
 
 def get_position_semrush(api_key, database, keyword, target_url, display_date=None):
-    """Récupère la position d'une URL sur un mot-clé via SEMrush.
-       Si le fichier debug existe déjà, il l'utilise directement."""
-    
-    # Nom du fichier debug
     safe_kw = keyword.replace(" ", "_").replace("/", "_")
-    debug_file = os.path.join(DEBUG_FOLDER, f"semrush_{safe_kw}_{display_date or 'latest'}.csv")
-    
-    # ⚡ Si le fichier debug existe déjà, on l'utilise
-    if os.path.exists(debug_file):
-        with open(debug_file, "r", encoding="utf-8") as f:
-            lines = f.read().strip().split("\n")
+    blob_name = f"semrush_{safe_kw}_{display_date or 'latest'}.csv"
+
+    # ⚡ Si déjà dans GCS → on lit directement
+    if gcs_blob_exists(blob_name):
+        content = gcs_read_text(blob_name)
+        lines = content.strip().split("\n")
     else:
-        # Sinon, on fait la requête SEMrush
+        # 🔥 Sinon → on appelle SEMrush
         endpoint = "https://api.semrush.com/"
         params = {
             "type": "phrase_organic",
@@ -52,25 +67,17 @@ def get_position_semrush(api_key, database, keyword, target_url, display_date=No
         if display_date:
             params["display_date"] = display_date
 
-        try:
-            r = requests.get(endpoint, params=params)
-            if r.status_code != 200:
-                print(f"⚠️ Erreur {r.status_code} pour '{keyword}' ({display_date})")
-                if display_date:
-                    return get_position_semrush(api_key, database, keyword, target_url, display_date=None)
-                return None
-
-            lines = r.text.strip().split("\n")
-            # Sauvegarde pour debug
-            os.makedirs(DEBUG_FOLDER, exist_ok=True)
-            with open(debug_file, "w", encoding="utf-8") as f:
-                f.write(r.text)
-
-        except Exception as e:
-            print(f"⚠️ Erreur de requête SEMrush ({keyword}, {display_date}): {e}")
+        r = requests.get(endpoint, params=params)
+        if r.status_code != 200:
+            print(f"⚠️ Erreur {r.status_code} pour {keyword}")
             return None
 
-    # Parse les lignes
+        content = r.text
+        lines = content.strip().split("\n")
+
+        # 💾 Sauvegarde dans Google Cloud Storage
+        gcs_write_text(blob_name, content)
+
     if len(lines) <= 1:
         return None
 
@@ -80,4 +87,5 @@ def get_position_semrush(api_key, database, keyword, target_url, display_date=No
             pos, url = parts[0], parts[1]
             if target_url.lower() in url.lower():
                 return float(pos)
+
     return None
