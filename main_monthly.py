@@ -14,12 +14,12 @@ service_account_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
 # ------------------------------
 # CONFIGURATION
 # ------------------------------
-API_KEY =  os.environ['api_key_semrush']   # <-- remplace par ta clé
+API_KEY =  os.environ['api_key_semrush']   
 DATABASE = "fr"
 GOOGLE_SHEET_ID = os.environ['GOOGLE_SHEET_ID']
 SOURCE_SHEET_NAME = "Team Data- URLS"
 TARGET_SHEET_NAME = "monthly_run"
-HISTORIC_MONTHS = 6  # nombre de mois à récupérer pour l’historique
+HISTORIC_MONTHS = 1  # nombre de mois à récupérer pour l’historique
 #json_account = os.environ['credentials_service_account']
 # ------------------------------
 # FONCTIONS
@@ -56,7 +56,7 @@ def main():
 
     monthly_dates = get_monthly_dates(HISTORIC_MONTHS)
     new_rows = []
-    df_source=df_source[60:102]
+    
     for _, row in df_source.iterrows():
         url = row["URLs optimisées et publiées"].strip()
         keyword = row["MC principal optimise"].strip()
@@ -99,7 +99,7 @@ def main():
         start_row = len(target_sheet.get_all_values()) + 1
         for i, row_vals in enumerate(new_rows):
             try:
-                target_sheet.update(f"A{start_row + i}", [row_vals])
+                target_sheet.update(values =[row_vals] , range_name= f"A{start_row + i}" )
             except Exception as e:
                 import traceback
                 print("ERROR DURING SHEET UPDATE:", e)
