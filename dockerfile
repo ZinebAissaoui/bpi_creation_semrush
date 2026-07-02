@@ -5,4 +5,5 @@ COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "main_monthly.py"]
+# Orchestrateur mensuel : sync URLs -> positions M-1/M+1 -> snapshot monthly_run
+CMD ["python", "run_pipeline.py"]

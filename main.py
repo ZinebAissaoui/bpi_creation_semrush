@@ -1,11 +1,14 @@
 import pandas as pd
 import time
+import argparse
 from dotenv import load_dotenv
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from gspread.utils import rowcol_to_a1
 from connectors.google_sheet import connect_gsheet
-from connectors.semrush_local import *
+# Cache SEMrush persistant dans Google Cloud Storage (utile en conteneur éphémère).
+from connectors.semrush import *
 load_dotenv()
 
 # ------------------------------
@@ -22,7 +25,11 @@ SHEET_NAME = "Team Data- URLS"
 # ------------------------------
 # SCRIPT PRINCIPAL
 # ------------------------------
-def main():
+def main(start_row=2):
+    # start_row = numéro de ligne du Sheet où commencer (1 = en-têtes, 2 = 1re ligne de données)
+    if start_row < 2:
+        raise ValueError("start_row doit être >= 2 (la ligne 1 contient les en-têtes)")
+
     print("🔗 Connexion à Google Sheets…")
     sheet = connect_gsheet(GOOGLE_SHEET_ID, SHEET_NAME,service_account_info)
 
@@ -31,10 +38,16 @@ def main():
     data = sheet.get_all_records(expected_headers=None)
     df = pd.DataFrame(data)
 
-    print(f"✅ {len(df)} lignes trouvées")
+    print(f"✅ {len(df)} lignes trouvées au total")
 
     # On ne garde que les colonnes utiles
     df = df[["URLs optimisées et publiées", "Catégorie", "MC principal optimise", "Date Intégration"]]
+
+    # 🔁 Reprise incrémentale : on ne traite qu'à partir de start_row.
+    # df index 0 correspond à la ligne 2 du Sheet -> décalage de 2.
+    df_start_index = start_row - 2
+    df = df.iloc[df_start_index:]
+    print(f"▶️ Reprise à la ligne {start_row} du Sheet -> {len(df)} lignes à traiter")
 
     new_positions = []
 
@@ -82,8 +95,11 @@ def main():
     col_indexes = [existing_cols.index(h) + 1 for h in headers]
 
     print("📝 Écriture des résultats dans Google Sheets…")
-    for row_idx, vals in enumerate(new_positions, start=2):
-        range_str = f"{chr(64 + col_indexes[0])}{row_idx}:{chr(64 + col_indexes[-1])}{row_idx}"
+    # On écrit à partir de start_row (et non plus systématiquement à la ligne 2).
+    for row_idx, vals in enumerate(new_positions, start=start_row):
+        start_cell = rowcol_to_a1(row_idx, col_indexes[0])
+        end_cell = rowcol_to_a1(row_idx, col_indexes[-1])
+        range_str = f"{start_cell}:{end_cell}"
         sheet.update(values=[vals], range_name=range_str)
 
     print("\n✅ Mise à jour terminée dans la feuille Google Sheets.")
@@ -91,4 +107,12 @@ def main():
 
 # ------------------------------
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Remplit les colonnes SEMrush du Google Sheet.")
+    parser.add_argument(
+        "--start-row",
+        type=int,
+        default=2,
+        help="Numéro de ligne du Sheet où commencer (1 = en-têtes, 2 = 1re ligne de données). Défaut : 2 (tout le fichier).",
+    )
+    cli_args = parser.parse_args()
+    main(start_row=cli_args.start_row)

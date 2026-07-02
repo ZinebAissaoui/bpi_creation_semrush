@@ -28,5 +28,23 @@ jobs:
             europe-west9-docker.pkg.dev/eskimoz-analytics/cloud-run-source-deploy/bpicreation:${{ steps.get-tag.outputs.short_ref }}
             europe-west9-docker.pkg.dev/eskimoz-analytics/cloud-run-source-deploy/bpicreation:latest
 
+      # --- Repointe le Cloud Run Job vers la nouvelle image ---
+      # Le job doit avoir été créé une première fois via deploy/deploy_job.sh.
+      # Sans cette étape, le job continuerait d'exécuter l'ancienne image figée.
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Update Cloud Run Job image
+        run: |
+          gcloud run jobs update bpicreation \
+            --image=europe-west9-docker.pkg.dev/eskimoz-analytics/cloud-run-source-deploy/bpicreation:latest \
+            --region=europe-west9 \
+            --project=eskimoz-analytics
+
 
 
