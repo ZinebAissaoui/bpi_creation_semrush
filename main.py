@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from gspread.utils import rowcol_to_a1
-from connectors.google_sheet import connect_gsheet
+from connectors.google_sheet import connect_gsheet, load_service_account_info
 # Cache SEMrush persistant dans Google Cloud Storage (utile en conteneur éphémère).
 from connectors.semrush import *
 load_dotenv()
@@ -19,7 +19,7 @@ DATABASE = "fr"                   # exemple : fr, us, uk, es, etc.
 #INPUT_CSV = "urls_semrush.csv"
 #OUTPUT_CSV = "urls_semrush_updated.csv"
 GOOGLE_SHEET_ID = os.environ['GOOGLE_SHEET_ID']  # <-- remplace par l’ID de ton Google Sheet
-service_account_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+service_account_info = load_service_account_info()
 
 SHEET_NAME = "Team Data- URLS"
 # ------------------------------

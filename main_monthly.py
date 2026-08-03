@@ -5,12 +5,12 @@ import json
 from dotenv import load_dotenv
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from connectors.google_sheet import connect_gsheet
+from connectors.google_sheet import connect_gsheet, load_service_account_info
 from connectors.semrush import *
 
 load_dotenv()
 # Charger la variable d'environnement"
-service_account_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+service_account_info = load_service_account_info()
 # ------------------------------
 # CONFIGURATION
 # ------------------------------

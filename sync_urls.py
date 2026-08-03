@@ -21,10 +21,10 @@ import pandas as pd
 from dotenv import load_dotenv
 from dateutil.relativedelta import relativedelta
 
-from connectors.google_sheet import connect_gsheet
+from connectors.google_sheet import connect_gsheet, load_service_account_info
 
 load_dotenv()
-service_account_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+service_account_info = load_service_account_info()
 
 # ------------------------------
 # CONFIGURATION
@@ -35,7 +35,10 @@ TARGET_SHEET_NAME = "Team Data- URLS"
 
 # Nombre de mois de "sécurité" : on n'intègre que les URLs dont le mois
 # d'intégration est < (mois actuel - MONTHS_MARGIN).
-MONTHS_MARGIN = 2
+# Avec 1 : en mois X, on intègre jusqu'à M-2 (dont le M+1 = M-1, mois déjà
+# clôturé). Passer à 2 pour une marge supplémentaire si les données SEMrush
+# du mois précédent ne sont pas encore stabilisées au moment du run.
+MONTHS_MARGIN = 1
 
 # Correspondance mois français (abréviations Excel/Sheets locale FR) -> numéro.
 # Les clés sont normalisées (sans accent, sans point final, en minuscules).

@@ -7,13 +7,14 @@ import requests
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
+from connectors.google_sheet import load_service_account_info
 load_dotenv()
 DEBUG_FOLDER = "debug_semrush"     # dossier pour stocker les réponses brutes
 
 os.makedirs(DEBUG_FOLDER, exist_ok=True)
 
 # Authentification (même JSON que pour Google Sheets)
-service_account_info =  json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+service_account_info = load_service_account_info()
 
 
 storage_client = storage.Client.from_service_account_info(service_account_info)
